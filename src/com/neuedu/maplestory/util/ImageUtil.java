@@ -58,6 +58,23 @@ public class ImageUtil {
 			imgs.put("hero_shoot_right1_" + i, GameUtil.getImage("com/neuedu/maplestory/img/hero/shoot_r/shoot1_" + i + ".png"));
 		}
 		
+		//便便子弹图片
+		imgs.put("hero_shoot_bullet", GameUtil.getImage("com/neuedu/maplestory/img/bullet/便便 1.png"));
+		
+		//怪物提鲁站立图片
+		for(int i = 0; i < 6; i ++) {
+			imgs.put("mob_stand_left1_" + i, GameUtil.getImage("com/neuedu/maplestory/img/mob/0100123-提鲁/stand.frames/" + (i * 180) + ".png"));
+		}
+		
+		//怪物提鲁移动图片
+		for(int i = 0; i < 6; i ++) {
+			imgs.put("mob_move_left1_" + i, GameUtil.getImage("com/neuedu/maplestory/img/mob/0100123-提鲁/move.frames/" + (i * 180) + ".png"));
+		}
+		
+		//怪物提鲁死亡图片
+		for(int i = 0; i < 13; i ++) {
+			imgs.put("mob_die_left1_" + i, GameUtil.getImage("com/neuedu/maplestory/img/mob/0100123-提鲁/die1.frames/" + i + ".png"));
+		}
 	}
 	
 	/**

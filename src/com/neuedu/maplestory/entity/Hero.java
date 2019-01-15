@@ -7,6 +7,7 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.KeyEvent;
 
+import com.neuedu.maplestory.client.MapleStoryClient;
 import com.neuedu.maplestory.constant.Constant;
 import com.neuedu.maplestory.util.ImageUtil;
 
@@ -14,7 +15,7 @@ import com.neuedu.maplestory.util.ImageUtil;
  * @author jssd 英雄实体类, 封装了移动, 攻击, 初始位置等方法
  */
 public class Hero {
-	public static Image actionImgs[] = new Image[100];
+	public static Image actionImgs[] = new Image[100]; // 英雄状态图片
 
 	static {
 		// 右站立
@@ -48,24 +49,30 @@ public class Hero {
 
 	}
 
-	public int x; // 位置x坐标
-	public int y; // 位置y坐标
-	public Image img; // 英雄图片
-	public boolean left, right, walk, jump, shoot; // 英雄移动方向, 是否正在移动
-	public double speed; // 英雄移动速度
-	public Direction dir; // 面向的方向
-	public Action action; // 英雄的行动状态
+	private int x; // 位置x坐标
+	private int y; // 位置y坐标
+	private Image img; // 英雄图片
+	private int height; // 图像高度
+	private int width; // 图像宽度
+	private boolean left, right, walk, jump, shoot; // 英雄移动方向, 是否正在移动
+	private double speed; // 英雄移动速度
+	private Direction dir; // 面向的方向
+	private Action action; // 英雄的行动状态
+	private MapleStoryClient msc; // 客户端
 
 	/**
-	 * 默认构造, 位置在x = 200px, y = 200px
+	 * 默认构造, 位置在x = 200px, y = 地面高度
 	 */
-	public Hero() {
-		this.x = 200;
-		this.y = 200;
+	public Hero(MapleStoryClient msc) {
+		this.msc = msc;
+		this.img = ImageUtil.getImage("hero_stand_right1_0");
+		this.width = img.getWidth(null);
+		this.height = img.getHeight(null);
 		this.dir = Direction.RIGHT;
 		this.action = Action.STAND;
 		this.speed = 10;
-		this.img = ImageUtil.getImage("hero_stand_right1_0");
+		this.x = 200;
+		this.y = msc.back.getFloor() - this.height;
 	}
 
 	/**
@@ -74,8 +81,8 @@ public class Hero {
 	 * @param x
 	 * @param y
 	 */
-	public Hero(int x, int y) {
-		this();
+	public Hero(MapleStoryClient msc, int x, int y) {
+		this(msc);
 		this.x = x;
 		this.y = y;
 	}
@@ -87,8 +94,8 @@ public class Hero {
 	 * @param y
 	 * @param speed
 	 */
-	public Hero(int x, int y, double speed) {
-		this(x, y);
+	public Hero(MapleStoryClient msc, int x, int y, double speed) {
+		this(msc, x, y);
 		this.speed = speed;
 	}
 
@@ -195,17 +202,18 @@ public class Hero {
 				x += this.speed;
 			}
 		}
-//		if (shoot) {
-//			this.action = Action.SHOOT;
-//		}
+		// if (shoot) {
+		// this.action = Action.SHOOT;
+		// }
 		if (jump) {
 			this.action = Action.JUMP;
 			this.jump();
 		}
 		if (shoot) {
 			this.action = Action.SHOOT;
+			this.shoot();
 		}
-		if(!walk && !jump && !shoot) {
+		if (!walk && !jump && !shoot) {
 			this.action = Action.STAND;
 		}
 		this.outOfBound();
@@ -227,16 +235,16 @@ public class Hero {
 	 * 人物跳动算法 void
 	 */
 	private double t = 1;
-	private double g = 0.8;
-	private double v0 = 10;
+	private double v0 = 20;
 	private double vt = 0;
 	private double deltaHight = 0;
 	private boolean jump_up = true;
 	int i = 0;
+
 	public void jump() {
-		
+
 		if (jump_up) { // 假如人物做垂直上抛运动
-			vt = v0 - g * t;
+			vt = v0 - Constant.G * t;
 			v0 = vt;
 			deltaHight = v0 * t;
 			y -= deltaHight;
@@ -245,16 +253,16 @@ public class Hero {
 				vt = 0;
 				v0 = 0;
 				jump_up = false;
-				
+
 			}
 		} else {
-			vt = v0 + g * t;
+			vt = v0 + Constant.G * t;
 			v0 = vt;
 			deltaHight = v0 * t;
 			y += deltaHight;
-			if (y >= 200) {
-				y = 200;
-				v0 = 10;
+			if (y >= this.msc.back.getFloor() - this.height) {
+				y = this.msc.back.getFloor() - this.height;
+				v0 = 20;
 				vt = 0;
 				deltaHight = 0;
 				jump_up = true;
@@ -262,6 +270,13 @@ public class Hero {
 				this.action = Action.STAND;
 			}
 		}
+	}
+
+	/**
+	 * 人物射击方法 void
+	 */
+	public void shoot() {
+		this.msc.bullets.add(new Bullet(this.msc, x, y, dir));
 	}
 
 	/**
@@ -280,7 +295,7 @@ public class Hero {
 			right = false;
 			walk = false;
 			break;
-		case KeyEvent.VK_K:
+		case KeyEvent.VK_J:
 			shoot = false;
 			break;
 		default:
@@ -304,17 +319,38 @@ public class Hero {
 			right = true;
 			walk = true;
 			break;
-		case KeyEvent.VK_J:
+		case KeyEvent.VK_K:
 			jump = true;
 			break;
-		case KeyEvent.VK_K:
+		case KeyEvent.VK_J:
 			shoot = true;
 			break;
-		case KeyEvent.VK_3:
-			System.out.println(i);
-			
 		default:
 			break;
 		}
+	}
+	
+	/**
+	 * 取得图像的高
+	 * @return int
+	 */
+	public int getHeight() {
+		return height;
+	}
+
+	/**
+	 * 取得图像的宽
+	 * @return int
+	 */
+	public int getWidth() {
+		return width;
+	}
+
+	public int getX() {
+		return x;
+	}
+
+	public int getY() {
+		return y;
 	}
 }
