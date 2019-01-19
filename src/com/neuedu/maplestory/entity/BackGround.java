@@ -13,10 +13,10 @@ import com.neuedu.maplestory.util.ImageUtil;
  * 地图背景实体类, 封装了地图的位置
  */
 public class BackGround {
-	private int x; //坐标
-	private int y;
-	private int height; //图片高度
-	private int width;
+	public int x; //坐标
+	public int y;
+	public int height; //图片高度
+	public int width;
 	private Image img; //背景图片
 	private int floor; //地面y坐标
 	

@@ -3,19 +3,21 @@
  */
 package com.neuedu.maplestory.entity;
 
-import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Rectangle;
+import java.awt.image.BufferedImage;
+import java.util.Random;
 
 import com.neuedu.maplestory.client.MapleStoryClient;
 import com.neuedu.maplestory.constant.Constant;
 import com.neuedu.maplestory.util.ImageUtil;
+import com.neuedu.maplestory.util.MusicUtil;
 
 /**
  * @author jssd 怪物类
  */
-public class Mob {
+public class Mob extends Life{
 
 	private static Image mobsActionImg[] = new Image[100];
 
@@ -34,14 +36,10 @@ public class Mob {
 		}
 	}
 
-	private int x;
-	private int y; //坐标
-	private int height; //图片高度
-	private int width; //图片宽度
-	private boolean live = true; // 是否存活
-	MapleStoryClient msc; //客户端引用
-	private int HP; //怪物HP
-	private BloodBar bloodBar; //怪物HP
+	MapleStoryClient msc; // 客户端引用
+	private BloodBar bloodBar; // 怪物HP
+	private Direction dir; // 怪物的反向
+	private Action action; // 怪物的动作
 
 	public Mob(MapleStoryClient msc) {
 		this.msc = msc;
@@ -50,13 +48,16 @@ public class Mob {
 		this.x = 600;
 		this.y = msc.back.getFloor() - this.height;
 		this.HP = Constant.MOB_HP;
-		bloodBar = new BloodBar(x, y, 5, this.width);
+		this.dir = Direction.LEFT;
+		this.action = Action.WALK;
+		this.speed = 12;
+		bloodBar = new BloodBar(this, 5, this.width);
+		this.live = true;
 	}
 
 	public Mob(MapleStoryClient msc, int x) {
 		this(msc);
 		this.x = x;
-		bloodBar = new BloodBar(x, y, 5, this.width);
 	}
 
 	/**
@@ -68,29 +69,97 @@ public class Mob {
 
 	// 图片轮播计数器
 	private int count_stand_left = 0;
+	private int count_walk_left = 6;
 	private int count_die_left = 12;
 
 	/**
 	 * 画动物的方法
-	 * @param g void
+	 * 
+	 * @param g
+	 *            void
 	 */
 	public void draw(Graphics g) {
-		if (this.isLive()) {
-			count_stand_left++;
-			if (count_stand_left >= 6) {
-				count_stand_left = 0;
-			}
-			g.drawImage(mobsActionImg[count_stand_left], x, y, null);
-			bloodBar.draw(g);
-		} else {
-			count_die_left++;
-			if (count_die_left < 25) {
-				g.drawImage(mobsActionImg[count_die_left], x, y, null);
+		bloodBar.draw(g);
+		switch (dir) {
+		case LEFT:
+			if (this.isLive()) {
+				switch (action) {
+				case STAND:
+					count_stand_left++;
+					if (count_stand_left >= 6) {
+						count_stand_left = 0;
+					}
+					g.drawImage(mobsActionImg[count_stand_left], x, y, null);
+					break;
+				case WALK:
+					count_walk_left++;
+					if (count_walk_left >= 12) {
+						count_walk_left = 6;
+					}
+					g.drawImage(mobsActionImg[count_walk_left], x, y, null);
+					break;
+				default:
+					break;
+				}
 			} else {
-				this.msc.mobs.remove(this);
+				count_die_left++;
+				if (count_die_left < 25) {
+					g.drawImage(mobsActionImg[count_die_left], x, y, null);
+				} else {
+					this.msc.mobs.remove(this);
+				}
 			}
-
+			break;
+		case RIGHT:
+			if (this.isLive()) {
+				switch (action) {
+				case STAND:
+					count_stand_left++;
+					if (count_stand_left >= 6) {
+						count_stand_left = 0;
+					}
+					g.drawImage(ImageUtil.flipHorizontalJ2D((BufferedImage) mobsActionImg[count_stand_left]), x, y,
+							null);
+					break;
+				case WALK:
+					count_walk_left++;
+					if (count_walk_left >= 12) {
+						count_walk_left = 6;
+					}
+					g.drawImage(ImageUtil.flipHorizontalJ2D((BufferedImage) mobsActionImg[count_walk_left]), x, y,
+							null);
+					break;
+				default:
+					break;
+				}
+			} else {
+				count_die_left++;
+				if (count_die_left < 25) {
+					g.drawImage(ImageUtil.flipHorizontalJ2D((BufferedImage) mobsActionImg[count_die_left]), x, y, null);
+				} else {
+					this.msc.mobs.remove(this);
+				}
+			}
+			break;
+		default:
+			break;
 		}
+		move();
+	}
+
+	/**
+	 * 怪物移动的方法 void
+	 */
+	public void move() {
+		if (this.x <= msc.back.x && this.dir == Direction.LEFT) {
+			this.setLive(false);
+		}
+		if (this.x >= Constant.GAME_WIDTH - this.width && this.dir == Direction.RIGHT) {
+			this.speed = -speed;
+			this.dir = Direction.LEFT;
+		}
+
+		this.x -= this.speed;
 	}
 
 	/**
@@ -106,48 +175,24 @@ public class Mob {
 	 * 怪物被击中, 掉血 void
 	 */
 	public void hasHit() {
+		new MusicUtil("com/neuedu/maplestory/music/hashit.mp3").start();
 		this.HP -= 10;
 		if (this.HP <= 0) {
 			this.setLive(false);
-		}
-	}
-
-	/**
-	 * @author jssd 血条内部类
-	 */
-	class BloodBar {
-		private int x;
-		private int y; // 坐标
-		private int height; // 血条高度
-		private int width; // 血条长度
-
-		/**
-		 * 默认构造函数
-		 * @param x
-		 * @param y
-		 * @param height
-		 * @param width
-		 */
-		public BloodBar(int x, int y, int height, int width) {
-			this.x = x;
-			this.y = y;
-			this.height = height;
-			this.width = width;
-		}
-
-		/**
-		 * 画出血条的方法
-		 * 
-		 * @param g
-		 *            void
-		 */
-		private void draw(Graphics g) {
-			Color c = g.getColor();
-			g.setColor(Color.DARK_GRAY);
-			g.drawRect(x, y - 15, width, height);
-			g.setColor(Color.GREEN);
-			g.fillRect(x, y - 15, width * Mob.this.HP / Constant.MOB_HP, height);
-			g.setColor(c);
+			double temp = new Random().nextDouble();
+			int type = 0;
+			if(temp >= 0 && temp < 0.5) {
+				type = 0;
+			} else if( temp >= 0.5 && temp < 0.8) {
+				type = 1;			} else if (temp >= 0.8 && temp < 0.9) {
+				type = 2;
+			} else if(temp >= 0.9 && temp < 1) {
+				type = 3;
+			}
+			if(type > 0 && type < 4) {
+				this.msc.drops.add(new Drop(this.x, this.y, type));
+			}
+			msc.hero.score += 10;
 		}
 	}
 

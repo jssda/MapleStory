@@ -52,6 +52,7 @@ public class FrameUtil extends Frame {
 		// 设置窗口背景颜色
 		// this.setBackground(new Color(69,69,69));
 		new MyThread().start();
+		new MusicUtil("com/neuedu/maplestory/music/bgm.mp3", true).start();
 	}
 	
 	class MyThread extends Thread {
