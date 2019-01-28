@@ -108,8 +108,6 @@ public class Bullet {
 	public boolean hit(Mob mob) {
 		if (this.live && mob.isLive() && this.getRectangle().intersects(mob.getRectangle())) {
 			this.live = false;
-			
-			//mob.setLive(false);
 			mob.hasHit();
 			
 			return true;

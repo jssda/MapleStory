@@ -11,6 +11,7 @@ import java.util.List;
 
 import com.neuedu.maplestory.entity.BackGround;
 import com.neuedu.maplestory.entity.Bullet;
+import com.neuedu.maplestory.entity.Drop;
 import com.neuedu.maplestory.entity.Hero;
 import com.neuedu.maplestory.entity.Mob;
 import com.neuedu.maplestory.util.FrameUtil;
@@ -39,6 +40,9 @@ public class MapleStoryClient extends FrameUtil {
 
 	// 怪物加载
 	public List<Mob> mobs = new ArrayList<>();
+	
+	// 怪物凋落物
+	public List<Drop> drops = new ArrayList<>();
 
 	/*
 	 * (non-Javadoc)
@@ -52,16 +56,16 @@ public class MapleStoryClient extends FrameUtil {
 		back.draw(g); // 画背景
 		hero.draw(g); // 画英雄
 		
-//		/**
-//		 * 调试数据
-//		 */
-//		Color c = g.getColor();
-//		Font f = g.getFont();
-//		g.setFont(new Font("微软雅黑", Font.BOLD, 40));
-//		g.setColor(Color.white);
-//		g.drawString("子弹容器所有数据" + bullets.size(), 300, 400);
-//		g.setColor(c);
-//		g.setFont(f);
+		/**
+		 * 调试数据
+		 */
+		Color c = g.getColor();
+		Font f = g.getFont();
+		g.setFont(new Font("微软雅黑", Font.BOLD, 40));
+		g.setColor(Color.white);
+		g.drawString("怪物容器所有数据" + mobs.size(), 300, 400);
+		g.setColor(c);
+		g.setFont(f);
 		
 		// 画子弹
 		for (int i = 0; i < bullets.size(); i++) {
@@ -71,6 +75,10 @@ public class MapleStoryClient extends FrameUtil {
 		// 画怪物
 		for (int i = 0; i < mobs.size(); i++) {
 			mobs.get(i).draw(g);
+		}
+		//画怪物死后的凋落物
+		for(int i = 0; i < drops.size(); i ++) {
+			drops.get(i).draw(g);
 		}
 	}
 
@@ -104,10 +112,14 @@ public class MapleStoryClient extends FrameUtil {
 			public void keyReleased(KeyEvent e) {
 				hero.keyReleased(e);
 			}
+			
+			/* (non-Javadoc)
+			 * @see java.awt.event.KeyAdapter#keyTyped(java.awt.event.KeyEvent)
+			 */
 		});
 
-		for (int i = 0; i < 5; i++) {
-			mobs.add(new Mob(this, 400 + 130 * i));
+		for (int i = 0; i < 20; i++) {
+			mobs.add(new Mob(this, 1500 + 400 * i));
 		}
 	}
 
